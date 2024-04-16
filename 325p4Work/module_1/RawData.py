@@ -1,32 +1,59 @@
-'''This module contains the RawData class which is used to scrape the raw html data from a provided URL. 
-   It also contains the InputOutput class which is used to read and write data to and from files.''' 
+# scraping.py
 
-'''Single Responsibility Principle'''
+"""
+This module is responsible for fetching HTML content from a given URL and optionally saving it as raw HTML.
+It demonstrates the Single Responsibility Principle (SRP) by focusing solely on web scraping functionalities.
 
+Single Responsibility Principle (SRP) is applied
+This makes the system more maintainable and adaptable to change.
+
+Functions:
+    fetch_html(url, save_raw=True): Fetches the HTML content from the specified URL. It can also save the raw HTML to a file.
+    save_raw_html(html_content, url): Saves the raw HTML content to a specified file within the Data/raw directory.
+
+The SRP enhances maintainability and scalability by isolating the web scraping logic, making the module easy to update or replace if necessary.
+"""
+
+import os
 import requests
-from bs4 import BeautifulSoup
+from urllib.parse import urlparse, quote
 
-## Class to get the raw html data from a provided URL
-class RawData:
-    def scrape(url):
-        
-        ## Scrape the page source from the URL
-        response = requests.get(url)
-        lookUp = BeautifulSoup(response.text, 'html.parser')
+def fetch_html(url, save_raw=False):
+    """Fetches the HTML content of a given URL and optionally saves it to a file.
 
-        ## return html as BeautifulSoup object
-        return lookUp
+    Args:
+        url (str): The URL of the webpage to scrape.
+        save_raw (bool): Whether to save the raw HTML content to a file.
 
-## Class to read and write data to and from files
-class InputOutput:
-    def read_urls(filename):
-        ## Read URLs from a .txt file
-        with open(filename, 'r') as file:
-            urls = file.readlines()
-        urls = [url.strip() for url in urls]
-        return urls
-    
-    def write_to_file(article, filename):
-        ##Write the article to a .txt file
-        with open(filename, 'w', encoding='utf-8') as file:
-            file.write(article)
+    Returns:
+        str: Raw HTML content of the webpage.
+    """
+    try:
+        response = requests.get(url) 
+        response.raise_for_status()  
+        html_content = response.text 
+
+        if save_raw:
+            save_raw_html(html_content, url)
+
+        return html_content
+    except requests.RequestException as e:
+        print(f"Error fetching {url}: {e}")
+        return None
+
+def save_raw_html(html_content, url):
+    """Saves the raw HTML content to a file in the Data/raw directory.
+
+    Args:
+        html_content (str): The HTML content to save.
+        url (str): The URL of the webpage, used to generate the filename.
+    """
+    filename = quote(url, safe='')[7:200]  
+    filename += "_raw.txt"
+    raw_path = os.path.join('Data', 'raw', filename)
+
+    os.makedirs(os.path.dirname(raw_path), exist_ok=True)
+
+    with open(raw_path, 'w', encoding='utf-8') as file:
+        file.write(html_content)
+    print(f"Saved raw HTML content to {raw_path}")
